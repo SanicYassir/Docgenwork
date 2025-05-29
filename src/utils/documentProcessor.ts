@@ -4,6 +4,7 @@ import Docxtemplater from 'docxtemplater';
 import DocxMerger from 'docx-merger';
 import { extractSheetData, ProcessedData } from './excelUtils';
 import { FormSettings, GeneratedDocument } from '../contexts/FilesContext';
+import { saveGenerationLog } from './logUtils';
 
 interface ProcessingParams {
   excelFile: File;
@@ -200,6 +201,14 @@ export const processDocuments = async ({
       name: `${settings.semestre}_Enveloppes_Merged.docx`,
       type: 'merged',
       url: mergedEnveloppesUrl,
+    });
+    
+    // Save generation log
+    saveGenerationLog(settings, {
+      pv: pvDocs.length,
+      chemise: chemiseDocs.length,
+      enveloppe: enveloppeDocs.length,
+      merged: 3, // One merged document for each type
     });
     
     onProgress(100);

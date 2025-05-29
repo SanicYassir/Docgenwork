@@ -1,12 +1,16 @@
 import React, { useState } from 'react';
 import { useFilesContext } from '../contexts/FilesContext';
-import { ArrowLeft, Download, FileText, File, FileArchive, Filter } from 'lucide-react';
+import { ArrowLeft, Download, FileText, File, FileArchive, Filter, Clock } from 'lucide-react';
+import { getGenerationLogs } from '../utils/logUtils';
 
 type DocumentType = 'all' | 'pv' | 'chemise' | 'enveloppe' | 'merged';
 
 export const DocumentList: React.FC = () => {
   const { generatedDocuments, setStep, settings } = useFilesContext();
   const [selectedType, setSelectedType] = useState<DocumentType>('all');
+  const [showHistory, setShowHistory] = useState(false);
+  
+  const logs = getGenerationLogs();
 
   const getIcon = (type: string) => {
     switch (type) {
@@ -47,78 +51,141 @@ export const DocumentList: React.FC = () => {
       <div className="bg-white rounded-lg shadow-md p-6">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-xl font-semibold text-gray-800">Generated Documents</h2>
-          <div className="flex items-center space-x-2">
-            <Filter size={16} className="text-gray-500" />
-            <select
-              value={selectedType}
-              onChange={(e) => setSelectedType(e.target.value as DocumentType)}
-              className="border border-gray-300 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          <div className="flex items-center space-x-4">
+            <button
+              onClick={() => setShowHistory(!showHistory)}
+              className="flex items-center space-x-1 text-gray-600 hover:text-blue-600"
             >
-              <option value="all">All Documents</option>
-              <option value="pv">PV Documents</option>
-              <option value="chemise">Chemise Documents</option>
-              <option value="enveloppe">Enveloppe Documents</option>
-              <option value="merged">Merged Documents</option>
-            </select>
+              <Clock size={16} />
+              <span className="text-sm">History</span>
+            </button>
+            <div className="flex items-center space-x-2">
+              <Filter size={16} className="text-gray-500" />
+              <select
+                value={selectedType}
+                onChange={(e) => setSelectedType(e.target.value as DocumentType)}
+                className="border border-gray-300 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="all">All Documents</option>
+                <option value="pv">PV Documents</option>
+                <option value="chemise">Chemise Documents</option>
+                <option value="enveloppe">Enveloppe Documents</option>
+                <option value="merged">Merged Documents</option>
+              </select>
+            </div>
           </div>
         </div>
         
-        <div className="mb-6 p-4 bg-green-50 border border-green-100 rounded-lg">
-          <h3 className="text-green-800 font-medium mb-2">Processing Complete!</h3>
-          <p className="text-green-700 text-sm">
-            All documents for {settings.semestre} have been generated successfully. 
-            You can now download your files.
-          </p>
-        </div>
-        
-        <div className="space-y-4">
-          {filteredDocuments.length === 0 ? (
-            <p className="text-gray-500 text-center py-8">No documents found for the selected type.</p>
-          ) : (
-            <div className="overflow-hidden rounded-lg border border-gray-200">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Type
-                    </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      File Name
-                    </th>
-                    <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Action
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {filteredDocuments.map((doc, index) => (
-                    <tr key={index} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          {getIcon(doc.type)}
-                          <span className="ml-2 text-sm text-gray-700">{getTypeName(doc.type)}</span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                        {doc.name}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
-                        <a 
-                          href={doc.url}
-                          download={doc.name}
-                          className="inline-flex items-center px-3 py-1.5 bg-blue-50 text-blue-700 rounded-md hover:bg-blue-100 transition-colors"
-                        >
-                          <Download size={16} className="mr-1" />
-                          Download
-                        </a>
-                      </td>
+        {showHistory ? (
+          <div className="space-y-4">
+            <h3 className="text-lg font-medium text-gray-800 mb-4">Generation History</h3>
+            {logs.length === 0 ? (
+              <p className="text-gray-500 text-center py-8">No generation history available.</p>
+            ) : (
+              <div className="overflow-hidden rounded-lg border border-gray-200">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Date
+                      </th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Semestre
+                      </th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Control Type
+                      </th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Documents Generated
+                      </th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {logs.map((log, index) => (
+                      <tr key={index} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                          {new Date(log.timestamp).toLocaleDateString()}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                          {log.semestre}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                          {log.controlType}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                          <div className="flex space-x-3">
+                            <span className="text-blue-600">{log.documentCount.pv} PVs</span>
+                            <span className="text-amber-600">{log.documentCount.chemise} Chemises</span>
+                            <span className="text-teal-600">{log.documentCount.enveloppe} Enveloppes</span>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        ) : (
+          <>
+            <div className="mb-6 p-4 bg-green-50 border border-green-100 rounded-lg">
+              <h3 className="text-green-800 font-medium mb-2">Processing Complete!</h3>
+              <p className="text-green-700 text-sm">
+                All documents for {settings.semestre} have been generated successfully. 
+                You can now download your files.
+              </p>
             </div>
-          )}
-        </div>
+            
+            <div className="space-y-4">
+              {filteredDocuments.length === 0 ? (
+                <p className="text-gray-500 text-center py-8">No documents found for the selected type.</p>
+              ) : (
+                <div className="overflow-hidden rounded-lg border border-gray-200">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Type
+                        </th>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          File Name
+                        </th>
+                        <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Action
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {filteredDocuments.map((doc, index) => (
+                        <tr key={index} className="hover:bg-gray-50">
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="flex items-center">
+                              {getIcon(doc.type)}
+                              <span className="ml-2 text-sm text-gray-700">{getTypeName(doc.type)}</span>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                            {doc.name}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
+                            <a 
+                              href={doc.url}
+                              download={doc.name}
+                              className="inline-flex items-center px-3 py-1.5 bg-blue-50 text-blue-700 rounded-md hover:bg-blue-100 transition-colors"
+                            >
+                              <Download size={16} className="mr-1" />
+                              Download
+                            </a>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </>
+        )}
       </div>
       
       <div className="flex justify-between">
